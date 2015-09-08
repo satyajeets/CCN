@@ -396,6 +396,7 @@ public class ServerLFS implements Serializable {
 		while (serverStarted) {
 			while (!connected) {
 				try {
+					System.out.println("server started...");
 					System.out.print("Enter cache server to connect to: ");
 					String cacheServerAddress = sc.nextLine();
 					IP = cacheServerAddress;
@@ -462,7 +463,6 @@ public class ServerLFS implements Serializable {
         @Override
         public void run() {
             Scanner s = new Scanner(System.in);
-            System.out.println("server started...");
             while (true) {
                 //System.out.print("Enter prefix to be advertised: ");
                 String str = s.nextLine();
