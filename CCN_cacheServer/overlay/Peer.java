@@ -26,17 +26,16 @@ import topology.PassToRoutingLayer;
  *
  */
 public class Peer { // implements PeerInterface
-	// socket to communicate with neighboring nodes
-	static Socket peerSocket;
-
-	// ID of this node
-	static String ID;
 	// IP of this node
 	public static String IP;
-	// serverSocket to listen on
-	static ServerSocket serverSocket;
 	// map of neighboring cacheServers
 	public static HashMap<String, SocketContainer> neighbors;
+	// socket to communicate with neighboring nodes
+	static Socket peerSocket;
+	// ID of this node
+	static String ID;
+	// serverSocket to listen on
+	static ServerSocket serverSocket;
 	// map of neighboring clients and servers
 	static HashMap<String, SocketContainer> clientServers;
 	// map of vacancies with current and neighboring nodes
@@ -143,12 +142,12 @@ public class Peer { // implements PeerInterface
 					potentialNeighbors.clear();
 					potentialNeighbors.addAll(m.packet.neighbors);
 				}
-				
+
 				// connecting to more neighbors to satisfy log n condition for
 				// this node
 				int i = 0;
 				while (!linksSatisfied() && i < potentialNeighbors.size()) {
-					
+
 
 					// do not send request to already connected neighbor
 					while (i < potentialNeighbors.size()
@@ -190,14 +189,14 @@ public class Peer { // implements PeerInterface
 
 		boolean alive = true;
 		String action = "";
-/*		Thread a = new Thread(new Runnable() {
+		Thread a = new Thread(new Runnable() {
 			boolean alive = true;
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
 				while (alive) {
-					System.out.println("neighbors size: " + neighbors.size());
-					System.out.println("allNodes size: " + allNodes.size());
+					//System.out.println("neighbors size: " + neighbors.size());
+					//System.out.println("allNodes size: " + allNodes.size());
 					try {
 						Thread.sleep(3000);
 					} catch (InterruptedException e) {
@@ -206,7 +205,7 @@ public class Peer { // implements PeerInterface
 				}
 			}
 		});
-		a.start();*/
+		a.start();
 		while (alive) {
 
 			// add functions here to get node repo
@@ -221,10 +220,6 @@ public class Peer { // implements PeerInterface
 			case "node":
 				System.out.println("-printing nodes-");
 				mep.printNodeRepo();
-				break;
-			case "nas":
-				System.out.println("neighbors size: " + neighbors.size());
-				System.out.println("allNodes size: " + allNodes.size());
 				break;
 
 			case "nd":
@@ -389,23 +384,7 @@ public class Peer { // implements PeerInterface
 		System.out.println("Total neighbors notified: " + i);
 	}
 
-	/**
-	 * Method that starts a new thread to begin listening for new nodes that
-	 * wish to join in.
-	 */
-	public void listen() {
-		Listen listen = new Listen(this);
-		listen.start();
-	}
-
-	public void start() throws IOException {
-		System.out.println("Starting node...");
-		System.out.println("IP: " + IP);
-		System.out.println("Waiting for client peer...");
-		allNodes.add(getIP(IP));
-	}
-
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static Message<JoinPacket> join(String peer)
 			throws IOException,
 			ClassNotFoundException, InterruptedException {
@@ -450,7 +429,7 @@ public class Peer { // implements PeerInterface
 
 	/**
 	 * Update meta-data of node using received join packet.
-	 * 
+	 *
 	 * @param m
 	 */
 	public static void updateMetaData(Message<JoinPacket> m) {
@@ -469,22 +448,25 @@ public class Peer { // implements PeerInterface
 	/**
 	 * Method to be called by upper layers to send a message to a particular<br/>
 	 * neighbor.<br/>
-	 * 
+	 *
 	 * Message type should be set to 7.
-	 * 
+	 *
 	 * @param ID
 	 * @param m
 	 * @return
 	 */
 	@SuppressWarnings("rawtypes")
 	public static boolean sendMessage(String ID, Message m) {
-		synchronized (neighbors.get(idIPMap.get(ID))) {
+		System.out.println("ID: " + ID);
+		System.out.println("idipmap: " + idIPMap.get(ID));
+		System.out.println("neighbors: " + neighbors.get(idIPMap.get(ID)));
+		SocketContainer sc = neighbors.get(idIPMap.get(ID));
+		if (sc == null) {
+			sc = clientServers.get(idIPMap.get(ID));
+		}
+		synchronized (sc) {
 			try {
 				// System.out.println(":::ID::: " + ID);
-				SocketContainer sc = neighbors.get(idIPMap.get(ID));
-				if (sc == null) {
-					sc = clientServers.get(idIPMap.get(ID));
-				}
 				if (sc != null) {
 					sc.oos.writeObject(m);
 				} else {
@@ -503,9 +485,16 @@ public class Peer { // implements PeerInterface
 		try {
 			// System.out.println("SendMessageX::" + IP + " looking in "
 			// + neighbors.keySet());
-			synchronized (neighbors.get(IP)) {
-				SocketContainer sc = neighbors.get(IP);
-				sc.oos.writeObject(m);
+			if (neighbors.get(IP) != null) {
+				synchronized (neighbors.get(IP)) {
+					SocketContainer sc = neighbors.get(IP);
+					sc.oos.writeObject(m);
+				}
+			} else {
+				synchronized (clientServers.get(IP)) {
+					SocketContainer sc = clientServers.get(IP);
+					sc.oos.writeObject(m);
+				}
 			}
 		} catch (IOException e) {
 			return false;
@@ -516,9 +505,9 @@ public class Peer { // implements PeerInterface
 	/**
 	 * Method to be called by upper layers to send a message to a list of<br/>
 	 * neighbors.<br/>
-	 * 
+	 *
 	 * Message type should be set to 7.
-	 * 
+	 *
 	 * @param IDs
 	 * @param m
 	 * @return
@@ -538,9 +527,9 @@ public class Peer { // implements PeerInterface
 	/**
 	 * Method to be called by upper layers to send a message to all<br/>
 	 * neighbors except ID.<br/>
-	 * 
+	 * <p/>
 	 * Message type should be set to 7.
-	 * 
+	 *
 	 * @param ID
 	 * @param m
 	 * @return
@@ -581,10 +570,9 @@ public class Peer { // implements PeerInterface
 		logN = (int) Math.ceil(Math.log10(allNodes.size()) / Math.log10(2));
 	}
 
-
 	/**
 	 * Node ID generator
-	 * 
+	 *
 	 * @return
 	 * @throws UnknownHostException
 	 */
@@ -614,8 +602,8 @@ public class Peer { // implements PeerInterface
 	 * Checks if new join request can be processed by current node.<br/>
 	 * Does this by checking if number of links after the node joins in are<br/>
 	 * within limits of log<i>n</i>.
-	 * 
 	 *
+	 * @param peerSocket
 	 * @return
 	 */
 	public static boolean nodeDropRequired() {
@@ -645,5 +633,21 @@ public class Peer { // implements PeerInterface
 		System.out.println("linksPresent: " + linksPresent);
 		System.out.println("linksRequired: " + linksRequired);
 		return linksPresent == linksRequired;
+	}
+
+	/**
+	 * Method that starts a new thread to begin listening for new nodes that
+	 * wish to join in.
+	 */
+	public void listen() {
+		Listen listen = new Listen(this);
+		listen.start();
+	}
+
+	public void start() throws IOException {
+		System.out.println("Starting node...");
+		System.out.println("IP: " + IP);
+		System.out.println("Waiting for client peer...");
+		allNodes.add(getIP(IP));
 	}
 }

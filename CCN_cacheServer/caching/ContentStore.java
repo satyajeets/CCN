@@ -29,6 +29,7 @@ public class ContentStore {
     static {
         storeList = new ArrayList<String>();
         store = new HashMap<String, Content>();
+        sendPacketObj = new SendPacket();
 
     }
 
@@ -86,7 +87,7 @@ public class ContentStore {
         return copyFlag;
     }
 
-    public static boolean shouldDelete(Content contentStoreCopy, String interfaceId) {
+    public static boolean shouldDelete(Content contentStoreCopy) {
         boolean deleteFlag = true;
         for (String index : contentStoreCopy.listofScoreOnInterfaces.keySet()) {
             if (contentStoreCopy.listofScoreOnInterfaces.get(index) < contentStoreCopy.getMaxNScore() / 2) {
@@ -98,14 +99,16 @@ public class ContentStore {
 
     public static String convertContentToString(Content myObject) {
         String serializedObject = "";
-
+        byte buffer[];
         // serialize the object
         try {
             ByteArrayOutputStream bo = new ByteArrayOutputStream();
             ObjectOutputStream so = new ObjectOutputStream(bo);
             so.writeObject(myObject);
             so.flush();
-            serializedObject = bo.toString();
+            //buffer = bo.toByteArray();
+            //serializedObject = new String(buffer);
+            serializedObject = bo.toString("ISO-8859-1");
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -116,12 +119,13 @@ public class ContentStore {
         Content contentObj = null;
         try {
             // deserialize the object
-            byte b[] = serializedObject.getBytes();
+            byte b[] = serializedObject.getBytes("ISO-8859-1");
             ByteArrayInputStream bi = new ByteArrayInputStream(b);
             ObjectInputStream si = new ObjectInputStream(bi);
             contentObj = (Content) si.readObject();
         } catch (Exception e) {
             System.out.println(e);
+            e.printStackTrace();
         }
         return contentObj;
     }
@@ -131,16 +135,16 @@ public class ContentStore {
      * if store has required size then place it in store else replace.
      *
      * @param packet - incoming packet
-     * @param packet
+     * @param recievedFromNode
      * @return
      */
-    public static boolean incomingContent(String packet) {
+    public static boolean incomingContent(String packet, String recievedFromNode) {
         System.out.println("incoming content received");
         Content receivedContent = convertStringToContent(packet);
         if (receivedContent.getSizeInBytes() <= r.freeMemory()) {
-            return place(receivedContent);
+            return place(receivedContent, recievedFromNode);
         } else {
-            return replace(receivedContent);
+            return replace(receivedContent, recievedFromNode);
         }
     }
 
@@ -148,9 +152,10 @@ public class ContentStore {
      * If content store has no space then replace the least recently used content from content store with new content
      *
      * @param receivedContent
+     * @param recievedFromNode
      * @return
      */
-    private static boolean replace(Content receivedContent) {
+    private static boolean replace(Content receivedContent, String recievedFromNode) {
         return false;
     }
 
@@ -159,14 +164,16 @@ public class ContentStore {
      * content in the store
      *
      * @param receivedContent - incoming content
+     * @param recievedFromNode
      * @return
      */
-    public static boolean place(Content receivedContent) {
+    public static boolean place(Content receivedContent, String recievedFromNode) {
         if (!store.containsKey(receivedContent.getContentName())) {
             store.put(receivedContent.getContentName(), receivedContent);
+            store.get(receivedContent.getContentName()).trail.add(recievedFromNode);
             System.out.println("content placed");
             try {
-                advertiseNewlyAdded(receivedContent);
+                advertiseNewlyAdded(receivedContent, true);
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
@@ -181,20 +188,6 @@ public class ContentStore {
 
     }
 
-    private static void fillStore() {
-        Content c1 = new Content("firstContent", null, 200, "updatedSecondContent1");
-        Content c2 = new Content("secondContent", null, 200, "updatedSecondContent2");
-        Content c3 = new Content("thirdContent", null, 200, "updatedSecondContent3");
-        Content c4 = new Content("forthContent", null, 200, "updatedSecondContent4");
-        storeList.add(c1.getContentName());
-        storeList.add(c2.getContentName());
-        storeList.add(c3.getContentName());
-        storeList.add(c4.getContentName());
-        store.put(c1.getContentName(), c1);
-        store.put(c2.getContentName(), c2);
-        store.put(c3.getContentName(), c3);
-        store.put(c4.getContentName(), c4);
-    }
 
     private static void advertise(ArrayList<String> contentList,
                                   String cacheServerAddress) throws UnknownHostException {
@@ -207,13 +200,13 @@ public class ContentStore {
         sendPacketObj.forwardPacket(list.getOriginalPacket(), cacheServerAddress);
     }
 
-    private static void advertiseNewlyAdded(Content content)
+    private static void advertiseNewlyAdded(Content content, boolean addRemove)
             throws UnknownHostException {
         System.out.println("advertizing newly added content");
         //write code to advertize single prefixObj
         PrefixObj list = new PrefixObj(content.getContentName(),
                 Peer.generateID(Peer.getIP(Peer.IP)) + System.nanoTime() + "",
-                Peer.generateID(Peer.getIP(Peer.IP)) + "", true);
+                Peer.generateID(Peer.getIP(Peer.IP)) + "", addRemove);
         //sendPacketObj.createPrefixPacket(list);
         sendPacketObj.createClientPrefix(list);
         for (String e : Peer.neighbors.keySet()) {
@@ -227,12 +220,18 @@ public class ContentStore {
      * @param content - content requested
      * @return
      */
-    public boolean deleteContent(Content content) {
+    public static boolean deleteContent(Content content) {
         if (store.remove(content.getContentName()) != null) {
+        	try {
+				advertiseNewlyAdded(content , false);
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
             return true;
         } else {
             return false;
         }
 
-        }
+    }
 }

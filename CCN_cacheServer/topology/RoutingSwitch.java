@@ -17,6 +17,18 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 
+/**
+ * The class decides how to process a routing packet (interest and data packet) </br>
+ * Interest packets are first checked to see if the interest packet is</br>
+ * for the cache server, if it is the packet is processed</br>
+ * If the packet is not for the cache server, it is forwarded.</br>
+ * </br>
+ * Data packets are checked if they are for the server, if it is addressed</br>
+ * to the server, it is processed. If not it is forwarded based on the flag</br>
+ * setting 0,1,2.
+ * @author spufflez
+ *
+ */
 public class RoutingSwitch implements Runnable{
 
 	//String packet;
@@ -32,6 +44,15 @@ public class RoutingSwitch implements Runnable{
 	String recievedFromNode;
 
 
+	/**
+	 * Constructor
+	 * @param genericPacketObj
+	 * @param fib
+	 * @param pit
+	 * @param directlyConnectedNodes
+	 * @param nodeRepo
+	 * @param packetQueue2
+	 */
 	@SuppressWarnings("rawtypes")
 	public RoutingSwitch(GenericPacketObj genericPacketObj,
 			FIB fib,
@@ -68,7 +89,7 @@ public class RoutingSwitch implements Runnable{
 			//if(intrestObj.getContentName().equals(nodeRepo.getThisMachinesName()) == false){
 			if(contentNameSplit[0].equals(nodeRepo.getThisMachinesName()) == false){
 				try {
-					process.processIntrest(intrestObj);
+					process.processIntrest(intrestObj, this.recievedFromNode);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -77,26 +98,26 @@ public class RoutingSwitch implements Runnable{
 				if(contentNameSplit.length == 2){
 					if(contentNameSplit[1].equals("ping") == true){
 						process.preocessPingRequest(intrestObj);
+					}else{
+
+						SendPacket sendPacket = new SendPacket();
+						//the packet is for this node
+						//parse the neighbor request 
+						//NeighborRequestObj neighborRequestObj = new NeighborRequestObj(genericPacketObj.getRecievedFromNode());
+						NeighborRequestObj neighborRequestObj = new NeighborRequestObj(intrestObj.getContentName(), intrestObj.getOriginRouterName(), genericPacketObj.getRecievedFromNode());
+
+
+						//create the packet
+						sendPacket.createNeighborRequestPacket(neighborRequestObj);
+
+						//add to the update queue
+						GenericPacketObj<NeighborRequestObj> genericPacketObjUpdate = 
+								new GenericPacketObj<NeighborRequestObj>("neighborRequest", 
+										genericPacketObj.getRecievedFromNode(), 
+										neighborRequestObj);
+
+						packetQueue2.addToUpdateQueue(genericPacketObjUpdate);
 					}
-				}else{
-
-					SendPacket sendPacket = new SendPacket();
-					//the packet is for this node
-					//parse the neighbor request 
-					//NeighborRequestObj neighborRequestObj = new NeighborRequestObj(genericPacketObj.getRecievedFromNode());
-					NeighborRequestObj neighborRequestObj = new NeighborRequestObj(intrestObj.getContentName(), intrestObj.getOriginRouterName());
-
-
-					//create the packet
-					sendPacket.createNeighborRequestPacket(neighborRequestObj);
-
-					//add to the update queue
-					GenericPacketObj<NeighborRequestObj> genericPacketObjUpdate = 
-							new GenericPacketObj<NeighborRequestObj>("neighborRequest", 
-									genericPacketObj.getRecievedFromNode(), 
-									neighborRequestObj);
-
-					packetQueue2.addToUpdateQueue(genericPacketObjUpdate);
 				}
 			}
 			break;
@@ -141,77 +162,76 @@ public class RoutingSwitch implements Runnable{
 					if(dataContentNameSplit[1].equals("ping") == true){
 						//process ping response
 						process.processPingReply(dataObj);
-					}
-				}else{
-
-					//the packet is for this node
-					Gson gson = new Gson();
-					JsonObject jsonObject = gson.fromJson(dataObj.getData(), JsonObject.class);
-					JsonElement jsonActionElement = jsonObject.get("action");
-					String nestedAction = jsonActionElement.getAsString();
-					SendPacket sendPacket = new SendPacket();
-
-					if(nestedAction.equals("prefixResponse") == true){
-						//call prefix function
-						JsonElement jsonIDElement = jsonObject.get("msgID");
-						String msgID = jsonIDElement.getAsString();
-
-
-						JsonElement jsonAdvertiserElement = jsonObject.get("advertiser");
-						String advertiser = jsonAdvertiserElement.getAsString();
-
-						JsonElement JE = jsonObject.get("prefixList");
-						Type TYPE = new TypeToken<ArrayList<String>>(){}.getType();
-						ArrayList<String> prefixList = new Gson().fromJson(JE.getAsString(), TYPE);
-
-						PrefixListObj prefixListObj = new PrefixListObj(prefixList, advertiser, true, msgID);
-
-
-						//create the update packet
-						sendPacket.createPrefixResponsePacket(prefixListObj);
-
-						//add to update queue
-						//packetObj = new PacketObj(prefixListObj.getOriginalPacket(), nodeRepo.getThisMachinesName(), false);
-						GenericPacketObj<PrefixListObj> genericPacketObjPrefix = 
-								new GenericPacketObj<PrefixListObj>("prefixResponse", 
-										genericPacketObj.getRecievedFromNode(), 
-										prefixListObj);
-
-						packetQueue2.addToUpdateQueue(genericPacketObjPrefix);
 					}else{
-						//call neighbors function
-						//ModifyNodeObj modifyNodeObj = parse.parseModifyNodeJson(dataObj.getData());
 
-						JsonElement jsonNameElement = jsonObject.get("nodeName");
-						String nodeName = jsonNameElement.getAsString();
+						//the packet is for this node
+						Gson gson = new Gson();
+						JsonObject jsonObject = gson.fromJson(dataObj.getData(), JsonObject.class);
+						JsonElement jsonActionElement = jsonObject.get("action");
+						String nestedAction = jsonActionElement.getAsString();
+						SendPacket sendPacket = new SendPacket();
 
-						JsonElement jsonIDElement = jsonObject.get("msgID");
-						String msgID = jsonIDElement.getAsString();
-
-						JsonElement jsonNeighborsElement = jsonObject.get("neighbors");
-						String neighborsString = jsonNeighborsElement.getAsString();
-						Type neighborsType = new TypeToken<ArrayList<NeighborAndCostStrings>>(){}.getType();
-						ArrayList<NeighborAndCostStrings> neighborsList = gson.fromJson(neighborsString, neighborsType);
-
-
-						ModifyNodeObj modifyNodeObj = new ModifyNodeObj(nodeName, neighborsList, msgID);
-						//create the update packet
-						sendPacket.createNeighborResponsePacket(modifyNodeObj);
-
-						//add to update queue
-						//packetObj = new PacketObj(modifyNodeObj.getOriginalPacket(), nodeRepo.getThisMachinesName(), false);
-						GenericPacketObj<ModifyNodeObj> genericPacketObjNeighbors = 
-								new GenericPacketObj<ModifyNodeObj>("neighborResponse", 
-										genericPacketObj.getRecievedFromNode(), modifyNodeObj);
-						packetQueue2.addToUpdateQueue(genericPacketObjNeighbors);
-					}// ends if else neighbors/prefixes
+						if(nestedAction.equals("prefixResponse") == true){
+							//call prefix function
+							JsonElement jsonIDElement = jsonObject.get("msgID");
+							String msgID = jsonIDElement.getAsString();
 
 
+							JsonElement jsonAdvertiserElement = jsonObject.get("advertiser");
+							String advertiser = jsonAdvertiserElement.getAsString();
 
-				}//ends if else for ping/neighbors-prefixes
-				//break;
-			}//ends normal data route or ping
-			break;
+							JsonElement JE = jsonObject.get("prefixList");
+							Type TYPE = new TypeToken<ArrayList<String>>(){}.getType();
+							ArrayList<String> prefixList = new Gson().fromJson(JE.getAsString(), TYPE);
+
+							PrefixListObj prefixListObj = new PrefixListObj(prefixList, advertiser, true, msgID);
+
+
+							//create the update packet
+							sendPacket.createPrefixResponsePacket(prefixListObj);
+
+							//add to update queue
+							//packetObj = new PacketObj(prefixListObj.getOriginalPacket(), nodeRepo.getThisMachinesName(), false);
+							GenericPacketObj<PrefixListObj> genericPacketObjPrefix = 
+									new GenericPacketObj<PrefixListObj>("prefixResponse", 
+											genericPacketObj.getRecievedFromNode(), 
+											prefixListObj);
+
+							packetQueue2.addToUpdateQueue(genericPacketObjPrefix);
+						}else{
+							//call neighbors function
+
+							JsonElement jsonNameElement = jsonObject.get("nodeName");
+							String nodeName = jsonNameElement.getAsString();
+
+							JsonElement jsonIDElement = jsonObject.get("msgID");
+							String msgID = jsonIDElement.getAsString();
+
+							JsonElement jsonNeighborsElement = jsonObject.get("neighbors");
+							String neighborsString = jsonNeighborsElement.getAsString();
+							Type neighborsType = new TypeToken<ArrayList<NeighborAndCostStrings>>(){}.getType();
+							ArrayList<NeighborAndCostStrings> neighborsList = gson.fromJson(neighborsString, neighborsType);
+
+
+							ModifyNodeObj modifyNodeObj = new ModifyNodeObj(nodeName, neighborsList, msgID);
+							//create the update packet
+							sendPacket.createNeighborResponsePacket(modifyNodeObj);
+
+							//add to update queue
+							//packetObj = new PacketObj(modifyNodeObj.getOriginalPacket(), nodeRepo.getThisMachinesName(), false);
+							GenericPacketObj<ModifyNodeObj> genericPacketObjNeighbors = 
+									new GenericPacketObj<ModifyNodeObj>("neighborResponse", 
+											genericPacketObj.getRecievedFromNode(), modifyNodeObj);
+							packetQueue2.addToUpdateQueue(genericPacketObjNeighbors);
+						}// ends if else neighbors/prefixes
+
+
+
+					}//ends if else for ping/neighbors-prefixes
+					//break;
+				}//ends if length grater then 2
+				break;
+			}
 
 		default : 
 			System.out.println("Invalid route action");
