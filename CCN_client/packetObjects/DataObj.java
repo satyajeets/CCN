@@ -3,6 +3,11 @@ package packetObjects;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import overlay.Client;
+
 /**
  * This is the object used to create data packets. 
  * When being processed by a cache server data packets are parsed into data objects
@@ -31,7 +36,7 @@ public class DataObj {
 	String originalPacket;
 	byte cacheFlag;
 	boolean lastChunk;
-
+	private static Logger logger = LogManager.getLogger(DataObj.class);
 
 	/**
 	 * Constructor that accepts all parameters 
@@ -226,8 +231,10 @@ public class DataObj {
 		try {
 			return dataString.getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e) {
+			logger.error(e.getMessage());
+			System.out.println(e);
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 		return new byte[0];
 	}

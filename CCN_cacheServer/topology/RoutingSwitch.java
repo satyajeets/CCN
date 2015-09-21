@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import packetObjects.DataObj;
 import packetObjects.GenericPacketObj;
 import packetObjects.IntrestObj;
@@ -42,7 +45,7 @@ public class RoutingSwitch implements Runnable{
 	DirectlyConnectedNodes directlyConnectedNodes;
 	PacketQueue2 packetQueue2;
 	String recievedFromNode;
-
+	private static Logger logger = LogManager.getLogger(RoutingSwitch.class);
 
 	/**
 	 * Constructor
@@ -91,7 +94,9 @@ public class RoutingSwitch implements Runnable{
 				try {
 					process.processIntrest(intrestObj, this.recievedFromNode);
 				} catch (IOException e) {
-					e.printStackTrace();
+					logger.error(e.getMessage());
+					System.out.println(e);
+//					e.printStackTrace();
 				}
 			}else{
 
@@ -153,6 +158,7 @@ public class RoutingSwitch implements Runnable{
 					break;
 
 				default : 
+					logger.error("data flag set to an incorrect value");
 					System.out.println("data flag set to an incorrect value");
 					break;
 				}
@@ -234,6 +240,7 @@ public class RoutingSwitch implements Runnable{
 			}
 
 		default : 
+			logger.error("Invalid route action");
 			System.out.println("Invalid route action");
 			break;
 		}

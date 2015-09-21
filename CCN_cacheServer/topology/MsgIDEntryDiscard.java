@@ -2,6 +2,11 @@ package topology;
 
 import java.util.ArrayList;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import overlay.Peer;
+
 /**
  * this class discards old message ID entries</br>
  * 
@@ -18,6 +23,7 @@ public class MsgIDEntryDiscard implements Runnable{
 	volatile boolean keepSmiling;
 	int sleepTime;
 	long keepMsgTime;
+	private static Logger logger = LogManager.getLogger(MsgIDEntryDiscard.class);
 
 	/**
 	 * Constructor
@@ -49,8 +55,10 @@ public class MsgIDEntryDiscard implements Runnable{
 			try {
 				Thread.sleep(sleepTime);
 			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				System.out.println(e);
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 

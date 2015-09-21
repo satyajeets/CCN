@@ -10,9 +10,14 @@ import packetObjects.PacketObj;
 import packetObjects.PrefixListObj;
 import packetObjects.PrefixObj;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import overlay.Peer;
 
 /**
  * This class parse the raw packet passed from the overlay to the routing layer.</br>
@@ -26,6 +31,7 @@ public class GenericParser {
 	Gson gson = new Gson();
 	Parse2 parse = new Parse2();
 	PacketQueue2 packetQueue2;
+	private static Logger logger = LogManager.getLogger(GenericParser.class);
 
 	/**
 	 * Constructor
@@ -62,6 +68,7 @@ public class GenericParser {
 			break;
 
 		default :
+			logger.error("Invalid packet type");
 			System.out.println("Invalid packet type");
 			break;
 
@@ -106,7 +113,8 @@ public class GenericParser {
 				packetQueue2.addToUpdateQueue(gpoAddLink);
 
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 
 			break;
@@ -119,7 +127,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoRemoveLink);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -131,7 +140,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoModifyLink);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -143,7 +153,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoModifyNodeObj);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -156,7 +167,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoPrefixObj);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -169,7 +181,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoPrefixListObj);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -181,7 +194,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoAddClient);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -193,7 +207,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoRemoveClient);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -205,7 +220,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoClientPrefix);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -217,7 +233,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoClientPrefixList);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -229,7 +246,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoNeighborRequestObj);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -241,7 +259,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoPrefixResponse);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -253,11 +272,13 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToUpdateQueue(gpoNeighborResponse);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
 		default :
+			logger.error("Invalid update packet action");
 			System.out.println("Invalid update packet action");
 			break;
 
@@ -284,7 +305,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToRoutingQueue(gpoIntrest);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -296,11 +318,13 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToRoutingQueue(gpoData);
 			}catch(Exception e){
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
 		default :
+			logger.error("Invalid route packet action");
 			System.out.println("Invalid route packet action");
 			break;
 

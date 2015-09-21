@@ -2,10 +2,14 @@ package overlay;
 
 import java.util.HashMap;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 public class Polling extends Thread {
 
 	static HashMap<String, Long> pollLatency;
 	static boolean polling;
+	private static Logger logger = LogManager.getLogger(Polling.class);
 
 	{
 		polling = true;
@@ -33,7 +37,8 @@ public class Polling extends Thread {
 				}
 			} catch (InterruptedException e) {
 				System.out.println("Exception in polling");
-				e.printStackTrace();
+				logger.error("Exception in polling "+ e);
+				//e.printStackTrace();
 			}
 		}
 	}

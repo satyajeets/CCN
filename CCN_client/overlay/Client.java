@@ -15,18 +15,23 @@ import java.util.HashMap;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 public class Client {
 	static ObjectInputStream ois;
 	static ObjectOutputStream oos;
 	static Link link;
 	static SendPacket sendPacketObj;
 	static String ID;
+	static String name;
 	static HashMap<String, String> idIPMap;
 	static GeneralQueueHandler gqh;
 	static PacketQueue2 pq2;
 	static ProcessData pd;
 	//used to get rtt, can be removed
 	static ConcurrentHashMap<String, Long> rtt;
+	private static Logger logger = LogManager.getLogger(Client.class);
 
     public static void main(String[] args) throws
             IOException {
@@ -48,6 +53,7 @@ public class Client {
 		while (clientStarted) {
 			while (!connected) {
 				try {
+					
 					System.out.print("Enter cache server to connect to: ");
 					String cacheServerAddress = s.nextLine();
 					Socket cacheServer = new Socket(cacheServerAddress, 43125);
@@ -63,6 +69,7 @@ public class Client {
 					connected = true;
 					// oos.writeObject("joining client");
 				} catch (UnknownHostException e) {
+					logger.error("Connection error.. Please try again.."+e);
 					System.out.println("Connection error.. Please try again..");
 				}
 			}

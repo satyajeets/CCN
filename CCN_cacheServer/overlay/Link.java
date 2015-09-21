@@ -3,6 +3,9 @@ package overlay;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 /**
  * This is a live link between two nodes. For multiple connections there would
  * be multiple Link threads running. The thread actively listens for incoming
@@ -18,6 +21,7 @@ public class Link extends Thread {
 	boolean running;
 	int type; // 1 - client, 2 - server, 3 - cache server
 	String ID;
+	private static Logger logger = LogManager.getLogger(Link.class);
 
 	public Link(String peerAddress, ObjectInputStream ois, int type)
 			throws IOException {
@@ -34,6 +38,7 @@ public class Link extends Thread {
 	public void run() {
 		Message m = null;
 		int attempt = 0;
+		logger.info("Started listening on link to " + connectedTo);
 		System.out.println("Started listening on link to " + connectedTo);
 		while (running) {
 			try {
@@ -50,25 +55,30 @@ public class Link extends Thread {
 					Peer.requests.add(m.requestNo);
 					handleUpdate(m);
 				} else {
+					logger.info("Packet discarded(repeated request no)");
 					System.out.println("Packet discarded(repeated request no)");
 				}
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				logger.error(e.getMessage());
+//				e.printStackTrace();
 				// running = false;
 			} catch (IOException e) {
 				attempt++;
-				e.printStackTrace();
+//				logger.error(e.getMessage());
+//				e.printStackTrace();
 				if (attempt == 3) {
 					try {
 						ois.close();
 						// broadcast force remove
 					} catch (IOException e1) {
-						e1.printStackTrace();
+						logger.error(e.getMessage());
+//						e1.printStackTrace();
 					}
 					running = false;
 				}
 			}
 			catch (InterruptedException e) {
+//				logger.error(e.getMessage());
 				// e.printStackTrace();
 				if (type == 1 || type == 2)
 					running = false;
@@ -79,9 +89,11 @@ public class Link extends Thread {
 							Peer.clientServers.get(Peer.idIPMap.get(ID)).socket
 									.close();
 						} catch (IOException e) {
+							logger.error("Error when closing "
+									+ "client or server socket" + e.getMessage());
 							System.out.println("Error when closing "
-									+ "client or server socket");
-							e.printStackTrace();
+									+ "client or server socket" + e);
+//							e.printStackTrace();
 						}
 						Peer.clientServers.remove(ID);
 						Peer.routing.removeClient(ID, -1);
@@ -89,9 +101,12 @@ public class Link extends Thread {
 						try {
 							Peer.neighbors.remove(connectedTo).socket.close();
 						} catch (IOException e) {
+							
 							System.out.println("Error when closing "
 									+ "cache server socket");
-							e.printStackTrace();
+							logger.error("Error when closing "
+									+ "cache server socket "+e.getMessage());
+//							e.printStackTrace();
 						}
 						Peer.neighbors.remove(connectedTo);
 						// Peer.allNodes.remove(connectedTo);
@@ -108,6 +123,7 @@ public class Link extends Thread {
 				}
 			}
 		}
+		logger.warn("Link to " + connectedTo + " dropped...");
 		System.out.println("Link to " + connectedTo + " dropped...");
 	}
 
@@ -120,6 +136,7 @@ public class Link extends Thread {
 			running = false;
 			Peer.neighbors.remove(connectedTo);
 			Peer.routing.removeLink(Peer.generateID(connectedTo) + "", 0);
+			logger.warn("Removed " + connectedTo + " as neighbor");
 			System.out.println("Removed " + connectedTo + " as neighbor");
 		}
 		// poll packet
@@ -180,9 +197,14 @@ public class Link extends Thread {
 				Message<String> m2 = m;
 				Peer.routing.addPacket(m2.packet, ID, false);
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.error(e.getMessage());
+				logger.error("Instance of message with type 7: "
+						+ m.packet.getClass());
+//				e.printStackTrace();
 				System.out.println("Instance of message with type 7: "
 						+ m.packet.getClass());
+				logger.error("inside message of type 7: "
+						+ ((Message) m.packet).packet);
 				System.out.println("inside message of type 7: "
 						+ ((Message) m.packet).packet);
 			}

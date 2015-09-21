@@ -3,6 +3,9 @@ package overlay;
 import java.io.ObjectInputStream;
 import java.net.UnknownHostException;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import packetObjects.PacketObj;
 import caching.ServerLFS;
 
@@ -14,6 +17,7 @@ public class ServerLinks extends Thread {
 	String nodeConnected;
 	ObjectInputStream ois = null;
 	boolean running;
+	private static Logger logger = LogManager.getLogger(ServerLinks.class);
 
 
 	public ServerLinks(String cacheNodeIp, ObjectInputStream ois) {
@@ -30,12 +34,17 @@ public class ServerLinks extends Thread {
 		while (running) {
 			try {
 				m = (Message) ois.readObject();
+				logger.info("Message received from: " + nodeConnected);
+				logger.info("Message type: " + m.type);
+				logger.info("Request no: " + m.requestNo);
 				System.out.println("Message received from: " + nodeConnected);
 				System.out.println("Message type: " + m.type);
 				System.out.println("Request no: " + m.requestNo);
 				handleUpdate(m);
 
 			} catch (Exception e) {
+				logger.error(e.getMessage());
+				System.out.println(e);
 				//e.printStackTrace();
 				running = false;
 			}
@@ -45,7 +54,7 @@ public class ServerLinks extends Thread {
 			}
 
 		}
-
+		logger.info("Server dropped...");
         System.out.println("Server dropped...");
     }
 

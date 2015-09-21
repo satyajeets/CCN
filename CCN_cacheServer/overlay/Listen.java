@@ -9,6 +9,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 /**
  * Listen for connection requests from new peers on Server Socket <br/>
  * On receipt of new connection request check if peer can be added and <br/>
@@ -23,6 +26,7 @@ public class Listen extends Thread {
 	ObjectInputStream ois;
 	ObjectOutputStream oos;
 	boolean running;
+	private static Logger logger = LogManager.getLogger(Listen.class);
 
 	/**
 	 * Constructor for initializing peer.
@@ -42,13 +46,18 @@ public class Listen extends Thread {
 			try {
 				// wait for new peer
 				Peer.peerSocket = Peer.serverSocket.accept();
+				logger.info("Connection request from "
+						+ Peer.peerSocket.getRemoteSocketAddress());
 				System.out.println("Connection request from "
 						+ Peer.peerSocket.getRemoteSocketAddress());
 				setUpObjectStreams();
+				logger.info("Waiting for join packet");
 				System.out.println("Waiting for join packet");
 				Message<JoinPacket> m = (Message<JoinPacket>) ois.readObject();
 				JoinPacket replyPacket = new JoinPacket();
+				logger.info("Join packet type " + m.type);
 				System.out.println("Join packet type " + m.type);
+				logger.info("Sending acknowledgement");
 				System.out.println("Sending acknowledgement");
 				Message<JoinPacket> mReply = new Message<JoinPacket>(2,
 						replyPacket);
@@ -84,6 +93,7 @@ public class Listen extends Thread {
 
 					if (Peer.nodeDropRequired()) {
 						mReply.type = -2;
+						logger.info("Dropping neighbor...");
 						System.out.println("Dropping neighbor...");
 						String dropped = dropNeighbor(Peer
 								.getIP(Peer.peerSocket.getRemoteSocketAddress()
@@ -92,17 +102,26 @@ public class Listen extends Thread {
 						mReply.packet.dropped = dropped;
 						oos.writeObject(mReply);
 						oos.flush();
+						logger.info("Node dropped" + dropped);
 						System.out.println("Node dropped" + dropped);
 					} else {
 						// read initial message from neighbor
+						logger.info("No drops needed");
 						System.out.println("No drops needed");
 						oos.writeObject(mReply);
 						oos.flush();
 					}
 					// adding new peer and updating meta-data
+					logger.info("Peer now coonnected");
 					System.out.println("Peer now coonnected");
+					logger.info("New neighbors " + Peer.neighbors);
 					System.out.println("New neighbors " + Peer.neighbors);
+					logger.info("New allNodes " + Peer.allNodes);
 					System.out.println("New allNodes " + Peer.allNodes);
+					logger.info("ID sent to routing:: "
+							+ Peer.generateID(Peer.peerSocket
+									.getRemoteSocketAddress().toString())
+							+ " cost::" + 60000);
 					System.out.println("ID sent to routing:: "
 							+ Peer.generateID(Peer.peerSocket
 									.getRemoteSocketAddress().toString())
@@ -113,11 +132,12 @@ public class Listen extends Thread {
 							60000);
 				}
 			} catch (IOException e) {
+				logger.error(e.getMessage());
 				e.printStackTrace();
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				logger.error(e.getMessage());
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				logger.error(e.getMessage());
 			} finally {
 				Peer.peerSocket = null;
 				oos = null;
@@ -170,6 +190,7 @@ public class Listen extends Thread {
 		oos = new ObjectOutputStream(Peer.peerSocket.getOutputStream());
 		// Thread.sleep(100);
 		ois = new ObjectInputStream(Peer.peerSocket.getInputStream());
+		logger.info("OOS and OIS set up");
 		System.out.println("OOS and OIS set up");
 	}
 

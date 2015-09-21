@@ -5,6 +5,9 @@ import packetObjects.GenericPacketObj;
 import packetObjects.IntrestObj;
 import packetObjects.PacketObj;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -22,6 +25,7 @@ public class GenericParser {
 	Gson gson = new Gson();
 	Parse2 parse = new Parse2();
 	PacketQueue2 packetQueue2;
+	private static Logger logger = LogManager.getLogger(GenericParser.class);
 
 	/**
 	 * Constructor
@@ -57,6 +61,7 @@ public class GenericParser {
 			break;
 
 		default :
+			logger.info("Invalid packet type");
 			System.out.println("Invalid packet type");
 			break;
 
@@ -85,7 +90,8 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToRoutingQueue(gpoIntrest);
 			} catch (Exception e) {
-
+				logger.error(e.getMessage());
+				System.out.println(e);
 			}
 			break;
 
@@ -97,11 +103,14 @@ public class GenericParser {
 				//add it to the Update Queue
 				packetQueue2.addToRoutingQueue(gpoData);
 			} catch (Exception e) {
+				logger.error(e.getMessage());
+				System.out.println(e);
 
 			}
 			break;
 
 		default :
+			logger.error("Invalid route packet action");
 			System.out.println("Invalid route packet action");
 			break;
 

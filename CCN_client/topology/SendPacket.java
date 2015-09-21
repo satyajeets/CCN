@@ -7,6 +7,9 @@ import packetObjects.IntrestObj;
 import packetObjects.PrefixListObj;
 import packetObjects.PrefixObj;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -21,6 +24,7 @@ import com.google.gson.JsonObject;
 public class SendPacket {
 
 	Gson gson = new Gson();
+	private static Logger logger = LogManager.getLogger(SendPacket.class);
 
 	/**
 	 * Constructor
@@ -76,6 +80,7 @@ public class SendPacket {
 
 		packet.addProperty("type", "route");
 		packet.addProperty("action", "intrest");
+//		packet.addProperty("requestPath", "");
 		packet.addProperty("contentName", intrestObj.getContentName());
 		packet.addProperty("originRouter", intrestObj.getOriginRouterName());
 		packet.addProperty("nonce", intrestObj.getNonce());
@@ -115,8 +120,12 @@ public class SendPacket {
 		// this will forward a packet to only the router specified
 		Message<String> packetMessage = new Message<String>(7, packet);
 		Client.sendMessage(packetMessage);
+		logger.info("-------------------------------------------");
+		logger.info("    -Forward packet next hop provided-");
+		logger.info("-------------------------------------------");
+		System.out.println("-------------------------------------------");
 		System.out.println("    -Forward packet next hop provided-");
-		System.out.println("packet: " + packet);
+//		System.out.println("packet: " + packet);
 		System.out.println("-------------------------------------------");
 		System.out.println("");
 	}

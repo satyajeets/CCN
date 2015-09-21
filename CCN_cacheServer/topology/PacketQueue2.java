@@ -3,6 +3,10 @@ package topology;
 import java.util.concurrent.ArrayBlockingQueue;
 //import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import overlay.Peer;
 import packetObjects.GenericPacketObj;
 import packetObjects.PacketObj;
 
@@ -26,6 +30,7 @@ public class PacketQueue2 {
 	ArrayBlockingQueue<GenericPacketObj> updateQueue;
 	@SuppressWarnings("rawtypes")
 	ArrayBlockingQueue<GenericPacketObj> routingQueue;
+	private static Logger logger = LogManager.getLogger(PacketQueue2.class);
 
 
 	/**
@@ -48,7 +53,9 @@ public class PacketQueue2 {
 		try {
 			generalQueue.put(packet);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
+			System.out.println(e);
+//			e.printStackTrace();
 		}
 	}
 
@@ -60,7 +67,9 @@ public class PacketQueue2 {
 		try {
 			return generalQueue.take();
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
+			System.out.println(e);
+//			e.printStackTrace();
 		}
 		return null;
 	}
@@ -82,7 +91,9 @@ public class PacketQueue2 {
 		try {
 			updateQueue.put(genericPacketObj);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
+			System.out.println(e);
+//			e.printStackTrace();
 		}
 	}
 
@@ -100,7 +111,9 @@ public class PacketQueue2 {
 
 			return gpo;
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
+			System.out.println(e);
+//			e.printStackTrace();
 		}
 		return null;
 	}
@@ -122,7 +135,9 @@ public class PacketQueue2 {
 		try {
 			routingQueue.put(genericPacketObj);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
+			System.out.println(e);
+//			e.printStackTrace();
 		}
 	}
 
@@ -135,7 +150,9 @@ public class PacketQueue2 {
 		try {
 			return routingQueue.take();
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
+			System.out.println(e);
+//			e.printStackTrace();
 		}
 		return null;
 	}

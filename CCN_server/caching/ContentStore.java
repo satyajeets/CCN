@@ -2,11 +2,15 @@ package caching;
 
 import java.util.HashMap;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 /**
  * Created by rushabhmehta91 on 4/6/15.
  */
 public class ContentStore {
 	static Runtime r = Runtime.getRuntime();
+	private static Logger logger = LogManager.getLogger(ContentStore.class);
 	public HashMap<String, Content> store;
 	{
 		store = new HashMap<String, Content>();
@@ -58,7 +62,9 @@ public class ContentStore {
 					return packet;
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.error(e.getMessage());
+				System.out.println(e);
+//				e.printStackTrace();
 			}
 			return replyContentRequest(fileName);//packet type : 1 = reply
 		} else {

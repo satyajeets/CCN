@@ -3,11 +3,15 @@ package topology;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import packetObjects.DataObj;
 import packetObjects.IntrestObj;
 import packetObjects.PITEntry;
 import caching.Content;
 import caching.ContentStore;
+import overlay.Peer;
 
 /**
  * This class is used to process interest and data packets.</br>
@@ -26,6 +30,7 @@ public class ProcessRoutingPackets {
 	SendPacket sendPacket;
 	DirectlyConnectedNodes directlyConnectedNodes;
 	String recievedFromNode;
+	private static Logger logger = LogManager.getLogger(ProcessRoutingPackets.class);
 
 	/**
 	 * Constructor
@@ -82,7 +87,9 @@ public class ProcessRoutingPackets {
 						deleteFlag = true;
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e.getMessage());
+					System.out.println(e);
+//					e.printStackTrace();
 				}
 				ContentStore.sendDataObj(requestedContent, intrestObj.getOriginRouterName(), receivedFromNode, copyFlag);
 				if (deleteFlag) {
@@ -92,6 +99,7 @@ public class ProcessRoutingPackets {
 			}
 
 		}
+		logger.info("Content name: " + contentName);
 		System.out.println("Content name: " + contentName);
 
 
@@ -199,8 +207,10 @@ public class ProcessRoutingPackets {
 			//check the cs flag
 			if (dataObj != null && dataObj.getCacheFlag() == 2) {
 				String content = dataObj.getData();
+				logger.info(content);
 				System.out.println(content);
 				ContentStore.incomingContent(content, recievedFromNode);
+				logger.info("Content with name " + content + "is placed in cached");
 				System.out.println("Content with name " + content + "is placed in cached");
 				dataObj.setCacheFlag((byte) 1);
 				sendPacket.createDataPacket(dataObj);
@@ -246,6 +256,7 @@ public class ProcessRoutingPackets {
 
 			ArrayList<String> clientRequesters = pit.getClientRequesters(dataObj.getContentName()).getClientRequesters();
 			for(int i = 0; i < clientRequesters.size(); i++){
+				logger.info("in for loop");
 				System.out.println("in for loop");
 				if(directlyConnectedNodes.doesDirectlyConnectedClientExist(clientRequesters.get(i)) == true){
 
@@ -384,6 +395,7 @@ public class ProcessRoutingPackets {
 	 */
 	public void processPingReply(DataObj dataObj){
 		//print data portion of data obj
+		logger.info("ping response: " + dataObj.getData());
 		System.out.println("ping response: " + dataObj.getData());
 	}
 }

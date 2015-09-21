@@ -2,6 +2,11 @@ package topology;
 
 import java.util.ArrayList;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import overlay.Peer;
+
 /**
  * This class removes old PIT entries that have been in the table to long</br>
  * sleep time: is the amount of time in milliseconds the thread will sleep</br>
@@ -15,6 +20,7 @@ public class PITEntryDiscard implements Runnable{
 	int sleepTime;
 	long keepMsgTime;
 	volatile boolean keepRunning;
+	private static Logger logger = LogManager.getLogger(PITEntryDiscard.class);
 
 
 	/**
@@ -46,8 +52,10 @@ public class PITEntryDiscard implements Runnable{
 			try {
 				Thread.sleep(sleepTime);
 			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				System.out.println(e);
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 	}

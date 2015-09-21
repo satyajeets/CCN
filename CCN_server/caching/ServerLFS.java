@@ -19,6 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 
 /**
  * Created by rushabhmehta91 on 5/4/15.
@@ -39,6 +42,7 @@ public class ServerLFS implements Serializable {
 	static Runtime r = Runtime.getRuntime();
 	private static ObjectOutputStream oos = null;
 	private static ObjectInputStream ois = null;
+	private static Logger logger = LogManager.getLogger(ServerLFS.class);
 
 	static
 	{
@@ -60,10 +64,16 @@ public class ServerLFS implements Serializable {
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
+		String csIP;
+		if(args.length==0){
+			csIP=null;
+		}else{
+			csIP=args[0];
+		}
 
 		fillStore();
 		initialize();
-		connectNetwork();
+		connectNetwork(csIP);
 
 	}
 
@@ -127,6 +137,8 @@ public class ServerLFS implements Serializable {
      */
     public static boolean sendMessage(String ID, Message m) {
         try {
+        	logger.info("IP: " + IP);
+        	logger.info("isConnected: " + isConnected);
             System.out.println("IP: " + IP);
             System.out.println("isConnected: " + isConnected);
             SocketContainer sc = isConnected.get(IP);
@@ -186,6 +198,7 @@ public class ServerLFS implements Serializable {
 		//        String fileName = packet2.getContentName();
 		//        Integer interfaceId=packet2;
 		if (store.containsKey(fileName)) {
+			logger.info("Request content found!!!!!");
 			System.out.println("Request content found!!!!!");
 			return store.get(fileName);
 			//            sendData(store.get(fileName));
@@ -200,6 +213,7 @@ public class ServerLFS implements Serializable {
 			//            }
 			//
 		} else {
+			logger.warn("Request content not found on server. sending 404");
 			System.out.println("Request content not found on server. sending 404");
 			return null;
 		}
@@ -208,6 +222,7 @@ public class ServerLFS implements Serializable {
 	}
 
 	public static void sendDataObj(Content sendingContent, String originRouter, String receivedFromNode, boolean copyFlag) {
+		logger.info("Sending requested content");
 		System.out.println("Sending requested content");
 		byte copyFlagValue;
 		if (copyFlag) {
@@ -257,6 +272,7 @@ public class ServerLFS implements Serializable {
 			so.flush();
 			serializedObject = bo.toString("ISO-8859-1");
 		} catch (Exception e) {
+			logger.error(e.getMessage());
 			System.out.println(e);
 		}
 		return serializedObject;
@@ -271,6 +287,8 @@ public class ServerLFS implements Serializable {
 			ObjectInputStream si = new ObjectInputStream(bi);
 			contentObj = (Content) si.readObject();
 		} catch (Exception e) {
+			
+			logger.error(e.getMessage());
             System.out.println(e);
         }
         return contentObj;
@@ -377,7 +395,7 @@ public class ServerLFS implements Serializable {
 		deadCacheNodes = new ArrayList<String>();
 	}
 
-	private static void connectNetwork() {
+	private static void connectNetwork(String csIP) {
 		Scanner sc = new Scanner(System.in);
 		sendPacketObj = new SendPacket();
 		boolean serverStarted = true;
@@ -396,9 +414,15 @@ public class ServerLFS implements Serializable {
 		while (serverStarted) {
 			while (!connected) {
 				try {
+					logger.info("server started...");
 					System.out.println("server started...");
-					System.out.print("Enter cache server to connect to: ");
-					String cacheServerAddress = sc.nextLine();
+					String cacheServerAddress;
+					if(csIP==null){
+						System.out.print("Enter cache server to connect to: ");
+						cacheServerAddress = sc.nextLine();
+					}else{
+						cacheServerAddress=csIP;
+					}
 					IP = cacheServerAddress;
 					Socket cacheServer = null;
 					try {
@@ -423,6 +447,7 @@ public class ServerLFS implements Serializable {
 					//advertise(storeList, cacheServerAddress);
 					advertise(storeList, ServerLFS.generateID(ServerLFS.getIP(cacheServerAddress)) + "");
 				} catch (UnknownHostException e) {
+					logger.error("Connection error.. Please try again.."+e.getMessage());
 					System.out.println("Connection error.. Please try again..");
                 }
             }
@@ -472,7 +497,9 @@ public class ServerLFS implements Serializable {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
+                logger.info("advertised: " + str);
                 System.out.println("advertised: " + str);
+                logger.info("content NOT added to content store");
                 System.out.println("content NOT added to content store");
                 System.out.println();
 			}

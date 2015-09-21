@@ -2,6 +2,9 @@ package topology;
 
 import java.io.IOException;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import overlay.Message;
 import overlay.Peer;
 import packetObjects.DataObj;
@@ -26,6 +29,7 @@ import com.google.gson.JsonObject;
 public class SendPacket {
 
 	Gson gson = new Gson();
+	private static Logger logger = LogManager.getLogger(SendPacket.class);
 
 	/**
 	 * Constructor
@@ -410,13 +414,15 @@ public class SendPacket {
 
 		// this will forward a packet to only the router specified
 		Message<String> packetMessage = new Message<String>(7, packet);
-		System.out.println("nextHop: " + nextHop);
+		
 		Peer.sendMessage(nextHop, packetMessage);
-		System.out.println("    -Forward packet next hop provided-");
-		System.out.println("packet: " + packet);
-		System.out.println("nextHop: " + nextHop);
 		System.out.println("-------------------------------------------");
-		System.out.println("");
+		System.out.println("Forward packet next hop"+ nextHop);
+//		System.out.println("nextHop: " + nextHop);
+		logger.info("Forward packet next hop"+ nextHop);
+//		System.out.println("packet: " + packet);
+//		System.out.println("nextHop: " + nextHop);
+		System.out.println("-------------------------------------------");
 	}
 
 	/**

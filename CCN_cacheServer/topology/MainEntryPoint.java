@@ -3,6 +3,10 @@ package topology;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import overlay.Peer;
 import packetObjects.DataObj;
 import packetObjects.IntrestObj;
 import packetObjects.PacketObj;
@@ -29,6 +33,7 @@ public class MainEntryPoint implements Runnable{
 	int msgIDSleepTime;
 	long msgIDKeepMsgTime;
 	int fibSleepTime;
+	private static Logger logger = LogManager.getLogger(MainEntryPoint.class);
 
 	public PacketQueue2 packetQueue2;
 	NodeRepository nodeRepo;
@@ -237,8 +242,10 @@ public class MainEntryPoint implements Runnable{
 			try {
 				Thread.sleep(3000);
 			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				System.out.println(e);
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 	}

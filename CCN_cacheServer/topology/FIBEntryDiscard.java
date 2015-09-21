@@ -2,6 +2,11 @@ package topology;
 
 import java.util.ArrayList;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import overlay.Peer;
+
 /**
  * This class removes FIB entries who's nodes have been removed from the graph.</br>
  * sleep time: determines how long the thread should sleep for in milliseconds</br>
@@ -16,6 +21,7 @@ public class FIBEntryDiscard implements Runnable{
 	int sleepTime;
 	volatile boolean keepRunning;
 	NodeRepository nodeRepo;
+	private static Logger logger = LogManager.getLogger(FIBEntryDiscard.class);
 
 	/**
 	 * Constructor
@@ -57,8 +63,10 @@ public class FIBEntryDiscard implements Runnable{
 			try {
 				Thread.sleep(sleepTime);
 			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				System.out.println(e);
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}		
 	}

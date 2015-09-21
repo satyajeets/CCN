@@ -14,6 +14,9 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 /**
  * Created by rushabhmehta91 on 4/6/15.
  */
@@ -25,6 +28,7 @@ public class ContentStore {
     static Runtime r = Runtime.getRuntime();
     private static ObjectOutputStream oos = null;
     private static ObjectInputStream ois = null;
+    private static Logger logger = LogManager.getLogger(ContentStore.class);
 
     static {
         storeList = new ArrayList<String>();
@@ -38,9 +42,11 @@ public class ContentStore {
         //        String fileName = packet2.getContentName();
         //        Integer interfaceId=packet2;
         if (store.containsKey(fileName)) {
+        	logger.info("Request content found!!!!!");
             System.out.println("Request content found!!!!!");
             return store.get(fileName);
         } else {
+        	logger.info("Request content not found on server. sending 404");
             System.out.println("Request content not found on server. sending 404");
             return null;
         }
@@ -49,7 +55,8 @@ public class ContentStore {
     }
 
     public static void sendDataObj(Content sendingContent, String originRouter, String receivedFromNode, boolean copyFlag) {
-        System.out.println("Sending requested content");
+        logger.info("Sending requested content");
+    	System.out.println("Sending requested content");
         byte copyFlagValue;
         if (copyFlag) {
             copyFlagValue = (byte) 2;
@@ -71,7 +78,8 @@ public class ContentStore {
      * @throws Exception
      */
     public static void updateScoreOnIterface(Content contentStoreCopy, String interfaceId) throws Exception {
-        System.out.println("updating score");
+        logger.info("updating score to "+(contentStoreCopy.listofScoreOnInterfaces.get(interfaceId) - 1) );
+    	System.out.println("updating score to "+(contentStoreCopy.listofScoreOnInterfaces.get(interfaceId) - 1) );
         if (!contentStoreCopy.listofScoreOnInterfaces.containsKey(interfaceId)) {
             contentStoreCopy.listofScoreOnInterfaces.put(interfaceId, contentStoreCopy.getMaxNScore());
         } else {
@@ -110,6 +118,7 @@ public class ContentStore {
             //serializedObject = new String(buffer);
             serializedObject = bo.toString("ISO-8859-1");
         } catch (Exception e) {
+        	logger.error(e.getMessage());
             System.out.println(e);
         }
         return serializedObject;
@@ -124,8 +133,9 @@ public class ContentStore {
             ObjectInputStream si = new ObjectInputStream(bi);
             contentObj = (Content) si.readObject();
         } catch (Exception e) {
+        	logger.error(e.getMessage());
             System.out.println(e);
-            e.printStackTrace();
+//            e.printStackTrace();
         }
         return contentObj;
     }
@@ -139,7 +149,8 @@ public class ContentStore {
      * @return
      */
     public static boolean incomingContent(String packet, String recievedFromNode) {
-        System.out.println("incoming content received");
+        logger.info("incoming content received");
+    	System.out.println("incoming content received");
         Content receivedContent = convertStringToContent(packet);
         if (receivedContent.getSizeInBytes() <= r.freeMemory()) {
             return place(receivedContent, recievedFromNode);
@@ -171,11 +182,14 @@ public class ContentStore {
         if (!store.containsKey(receivedContent.getContentName())) {
             store.put(receivedContent.getContentName(), receivedContent);
             store.get(receivedContent.getContentName()).trail.add(recievedFromNode);
+            logger.info("content placed");
             System.out.println("content placed");
             try {
                 advertiseNewlyAdded(receivedContent, true);
             } catch (UnknownHostException e) {
-                e.printStackTrace();
+            	logger.error(e.getMessage());
+            	System.out.println(e);
+//                e.printStackTrace();
             }
             return true;
         } else {
@@ -202,6 +216,7 @@ public class ContentStore {
 
     private static void advertiseNewlyAdded(Content content, boolean addRemove)
             throws UnknownHostException {
+    	logger.info("advertizing newly added content");
         System.out.println("advertizing newly added content");
         //write code to advertize single prefixObj
         PrefixObj list = new PrefixObj(content.getContentName(),
@@ -226,7 +241,9 @@ public class ContentStore {
 				advertiseNewlyAdded(content , false);
 			} catch (UnknownHostException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error(e.getMessage());
+				System.out.println(e);
+				
 			}
             return true;
         } else {

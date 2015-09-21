@@ -1,5 +1,8 @@
 package topology;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import packetObjects.LinkObj;
 import packetObjects.PacketObj;
 
@@ -14,6 +17,7 @@ public class PassToRoutingLayer {
 
 	PacketQueue2 packetQueue2;
 	SendPacket sendPacket;
+	private static Logger logger = LogManager.getLogger(PassToRoutingLayer.class);
 
 	/**
 	 * Constructor
@@ -30,6 +34,7 @@ public class PassToRoutingLayer {
 	 * @param nodeCost
 	 */
 	public void addLink(String nodeName, int nodeCost){
+		logger.info("New link to: " + nodeName);
 		System.out.println("New link to: " + nodeName);
 		//System.out.println("creating add link obj");
 		//make the obj

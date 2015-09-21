@@ -1,5 +1,9 @@
 package topology;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
+import overlay.Peer;
 import packetObjects.GenericPacketObj;
 import packetObjects.PacketObj;
 
@@ -15,6 +19,7 @@ public class UpdateQueueHandler implements Runnable {
 	FIB fib;
 	DirectlyConnectedNodes directlyConnectedNodes;
 	UpdateMsgsSeen updateMsgsSeen;
+	private static Logger logger = LogManager.getLogger(UpdateQueueHandler.class);
 
 	//Parse parse;
 	volatile boolean running;
@@ -75,7 +80,9 @@ public class UpdateQueueHandler implements Runnable {
 				try {
 					thread.join();
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					logger.error(e.getMessage());
+					System.out.println(e);
+//					e.printStackTrace();
 				}
 
 			}//if the packet was null, drop it 
