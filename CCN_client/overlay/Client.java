@@ -4,7 +4,8 @@ import packetObjects.IntrestObj;
 import topology.GeneralQueueHandler;
 import topology.PacketQueue2;
 import topology.SendPacket;
-
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -34,6 +35,7 @@ public class Client {
 		sendPacketObj = new SendPacket();
 		boolean clientStarted = true;
 		boolean connected = false;
+		int noReqContent = 0;
 
 		//used for rtt, can be removed
 		rtt = new ConcurrentHashMap<String, Long>();
@@ -66,12 +68,25 @@ public class Client {
 					System.out.println("Connection error.. Please try again..");
 				}
 			}
-			System.out.println("Enter content to be fetched(EXIT to exit): ");
-			String msg = s.nextLine();
-			IntrestObj intrst = new IntrestObj(msg, "", 1);
-			sendPacketObj.createIntrestPacket(intrst);
-			sendPacketObj.forwardPacket(intrst.getOriginalPacket());
-			rtt.put(msg, System.currentTimeMillis());
+//			System.out.println("Enter content to be fetched(EXIT to exit): ");
+
+			File contentList = new File("contentList.txt");
+			FileInputStream fis = new FileInputStream(contentList);
+			Scanner sc = new Scanner(fis);
+
+			if (noReqContent == 0) {
+				String msg = sc.nextLine();
+				System.out.println(msg);
+				IntrestObj intrst = new IntrestObj(msg, "", 1);
+				sendPacketObj.createIntrestPacket(intrst);
+				sendPacketObj.forwardPacket(intrst.getOriginalPacket());
+				rtt.put(msg, System.currentTimeMillis());
+				noReqContent++;
+				intrst = new IntrestObj("cache/" + msg, "", 1);
+				sendPacketObj.createIntrestPacket(intrst);
+				sendPacketObj.forwardPacket(intrst.getOriginalPacket());
+				rtt.put(msg, System.currentTimeMillis());
+			}
 		}
 	}
 

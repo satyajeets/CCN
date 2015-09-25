@@ -1,5 +1,8 @@
 package overlay;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.concurrent.ConcurrentHashMap;
 
 import packetObjects.DataObj;
@@ -38,6 +41,19 @@ public class ProcessData extends Thread {
 		String contentName = null;
 		if (dataObj != null) {
 			contentName = dataObj.getContentName();
+			try {
+				File file = new File("/home/ubuntu/" + contentName);
+				FileOutputStream fos = new FileOutputStream(file);
+				BufferedOutputStream bos = new BufferedOutputStream(fos);
+
+				String dataString = dataObj.getData();
+				byte[] data = dataString.getBytes("UTF-8");
+				System.out.println("Writing the file..");
+				bos.write(data, 0, data.length);
+
+			} catch (Exception e) {
+				System.out.println(e);
+			}
 		}
 
 		//used for rtt, can be removed

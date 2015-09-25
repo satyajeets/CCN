@@ -14,6 +14,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +62,7 @@ public class ServerLFS implements Serializable {
 			e.printStackTrace();
 		}
 
+		System.out.println("in main of server");
 		fillStore();
 		initialize();
 		connectNetwork();
@@ -185,6 +187,7 @@ public class ServerLFS implements Serializable {
 	public static Content serveRequest(String fileName) {
 		//        String fileName = packet2.getContentName();
 		//        Integer interfaceId=packet2;
+		System.out.println("Serving request:" + fileName);
 		if (store.containsKey(fileName)) {
 			System.out.println("Request content found!!!!!");
 			return store.get(fileName);
@@ -341,22 +344,47 @@ public class ServerLFS implements Serializable {
 	//
 	//    }
 
+    static String getContentAsString(String fileName) {
+    	String dataString = "";
+    	
+    	try {
+    		byte[] data = new byte[1024];
+
+    		File file = new File(fileName);
+			FileInputStream fis = new FileInputStream(fileName);
+			BufferedInputStream bis = new BufferedInputStream(fis);
+
+			while ( bis.available() > 0 ) {
+				bis.read(data, 0, data.length);
+				dataString += new String(data, Charset.forName("UTF-8"));
+			}
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+    	return dataString;
+    }
+
 	private static void fillStore() {
 		Content c1 = new Content("firstContent", new ArrayList<String>(), 200, "updatedSecondContent1");
-		Content c2 = new Content("secondContent",  new ArrayList<String>(), 200, "updatedSecondContent2");
-		Content c3 = new Content("thirdContent",  new ArrayList<String>(), 200, "updatedSecondContent3");
-		Content c4 = new Content("forthContent",  new ArrayList<String>(), 200, "updatedSecondContent4");
-		Content c5 = new Content("test",  new ArrayList<String>(), 200, "updatedSecondContent5");
 		storeList.add(c1.getContentName());
-		storeList.add(c2.getContentName());
-		storeList.add(c3.getContentName());
-		storeList.add(c4.getContentName());
-		storeList.add(c5.getContentName());
 		store.put(c1.getContentName(), c1);
-		store.put(c2.getContentName(), c2);
-		store.put(c3.getContentName(), c3);
-		store.put(c4.getContentName(), c4);
-		store.put(c5.getContentName(), c5);
+		
+		Content content;
+		String contentName, data;
+		File files = new File("/home/ubuntu/cache/");
+		String[] filesList = files.list();
+		for ( String s : filesList ) {
+			contentName = "cache/" + s;
+			data = getContentAsString(contentName);
+			content = new Content(s, new ArrayList<String>(), 200, data);
+			System.out.println("Adding: " + contentName);
+			storeList.add(contentName);
+			store.put(contentName, content);
+		}
+		System.out.println("Size of List: " + storeList.size());
 	}
 
 	private static void advertise(ArrayList<String> contentList,
@@ -366,6 +394,8 @@ public class ServerLFS implements Serializable {
 				generateID(getIP(serverNameID)) + "", true,
 				generateID(getIP(serverNameID)) + System.nanoTime() + "");
 		//sendPacketObj.createPrefixListPacket(list);
+		System.out.println("Advertising prefix List: ");
+		list.displayPrefixList();
 		sendPacketObj.createClientPrefixList(list);
 		sendPacketObj.forwardPacket(list.getOriginalPacket(), cacheServerAddress);
 
